@@ -1,4 +1,5 @@
 
+% FIXME: hide header if Referencing == true
 
 classdef DBTable < handle
 % --------------------------------- PUPLIC METHODS ---------------------------------
@@ -50,9 +51,12 @@ classdef DBTable < handle
                 col_name = dbfilter_obj.col{i};
                 value = dbfilter_obj.val{i};
                 Column = obj.get_col_content(col_name);
-%                 range = range & string(table2cell(Column)) == string(value);
-                [~, Column_string_name] = obj.find_column(col_name);
-                range = range & ismember(Column.(Column_string_name), value);
+                try
+                    [~, Column_string_name] = obj.find_column(col_name);
+                    range = range & ismember(Column.(Column_string_name), value);
+                catch
+                    range = range & string(table2cell(Column)) == string(value);
+                end
             end
             indexes = find(range);
             if obj.Referencing
@@ -76,6 +80,17 @@ classdef DBTable < handle
                 row_size = numel(obj.Virtual_indexes);
             else
                 row_size = size(obj.Table, 1);
+            end
+        end
+
+        function dereference(obj)
+            if ~obj.Referencing
+                warning('Nithing to dereference');
+            else
+                obj.Table = obj.Ref_dbtable.Table(obj.Virtual_indexes, :);
+                obj.Referencing = false;
+                obj.Virtual_indexes = [];
+                obj.Ref_dbtable = [];
             end
         end
     end
