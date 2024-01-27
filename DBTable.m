@@ -1,6 +1,3 @@
-
-% FIXME: hide header if Referencing == true
-
 classdef DBTable < handle
 % --------------------------------- PUPLIC METHODS ---------------------------------
     methods (Access = public)
@@ -19,7 +16,7 @@ classdef DBTable < handle
                 action = varargin{1};
                 if class(action) == "DBFilter"
                     obj.Referencing = true;
-                    obj.Header = source.Header;
+                    obj.Header = [];
                     obj.Ref_dbtable = source.get_dbtable_ref;
                     obj.Virtual_indexes = source.filter(action);
                     % fixme: maybe add ref_on_me_counter?
@@ -31,9 +28,18 @@ classdef DBTable < handle
             end
         end
 
-        % get all of column names
-        function Header = get_header(obj)
-            Header = obj.Header;
+        % get all of column names, possible argument is a array-like range selection
+        function Header = get_header(obj, varargin)
+            narginchk(1, 2);
+            if obj.Referencing
+                Header = obj.Ref_dbtable.Header;
+            else
+                Header = obj.Header;
+            end
+            if nargin == 2
+                range = varargin{1};
+                Header = Header(range);
+            end
         end
 
         % returns unique values of <Column> content
@@ -88,16 +94,17 @@ classdef DBTable < handle
                 warning('Nithing to dereference');
             else
                 obj.Table = obj.Ref_dbtable.Table(obj.Virtual_indexes, :);
-                obj.Referencing = false;
                 obj.Virtual_indexes = [];
-                obj.Ref_dbtable = [];
+                obj.Header = obj.get_header; % before obj.Referencing = false
+                obj.Ref_dbtable = DBTable.empty; % fixme
+                obj.Referencing = false;
             end
         end
     end
 
 % --------------------------------- PRIVATE METHODS ---------------------------------
     methods (Access = private)
-        % get reference on table
+        % get reference on data table
         function table_ref = get_dbtable_ref(obj)
             if obj.Referencing
                 table_ref = obj.Ref_dbtable;
@@ -107,6 +114,9 @@ classdef DBTable < handle
         end
 
         function load_from_file(obj, source, varargin)
+            if obj.Referencing
+                error('file could not be loaded into referencing DBtable')
+            end
             if nargin > 1+1
                 Sheetname = char(varargin{1});
             else
@@ -135,7 +145,7 @@ classdef DBTable < handle
             elseif isnumeric(Column) && numel(Column) ~= 1
                 error('undefined error'); % fixme
             else
-                col_ind = find(obj.Header == string(Column));
+                col_ind = find(obj.get_header == string(Column));
             end
             if isempty(col_ind)
                 error('no such column')
@@ -143,10 +153,10 @@ classdef DBTable < handle
             if col_ind < 1
                 error('column index must be >= 1')
             end
-            if col_ind > numel(obj.Header)
-                error(['column index must be <= ' num2str(numel(obj.Header))])
+            if col_ind > numel(obj.get_header)
+                error(['column index must be <= ' num2str(numel(obj.get_header))])
             end
-            col_name = obj.Header(col_ind);
+            col_name = obj.get_header(col_ind);
         end
     end
 
@@ -159,7 +169,7 @@ classdef DBTable < handle
         Ref_dbtable DBTable;
         Virtual_indexes double = [];
         % ---- for data table -----
-        Header string
+        Header string = string.empty;
         Table table
     end
 
