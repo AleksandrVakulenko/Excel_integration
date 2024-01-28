@@ -81,11 +81,30 @@ classdef DBTable < handle
             end
         end
 
+        % returns number of rows
         function row_size = get_table_size(obj)
             if obj.Referencing
                 row_size = numel(obj.Virtual_indexes);
             else
                 row_size = size(obj.Table, 1);
+            end
+        end
+
+        % returns number of filtered rows (filter is optional argument or it could be empty [])
+        function count = counter(obj, varargin)
+            if nargin == 2
+                dbfilter_obj = varargin{1};
+            else
+                dbfilter_obj = [];
+            end
+            if ~isempty(dbfilter_obj)
+                if class(dbfilter_obj) ~= "DBFilter"
+                    error("argument is not a DBFilter class")
+                end
+                tmp = DBTable(obj, dbfilter_obj);
+                count = tmp.get_table_size;
+            else
+                count = obj.get_table_size;
             end
         end
 
