@@ -13,9 +13,9 @@ Place_list = ["1.1.", "1.2.", "1.3.", "1.4.", "1.7.", "1.8.", "2.0.", "2.1.", ..
     "16.1.", "17.1.", "18.1."];
 
 % 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31
-% + + - - - 0 + - 0  +  -  +  +  -  +  +  +  +  +  -  +  0  +  +  +  +  -  +  -  +  0
+% + + - - + 0 + - 0  +  +  +  +  +  +  +  +  +  +  -  +  0  +  +  +  +  -  +  -  +  0
 
-N = 18;
+N = 1;
 Current_place = Place_list(N);
 
 Photo_table_part = DBTable(PhotoDB, DBFilter(Current_place, "1"));
@@ -33,14 +33,16 @@ end
 
 %%
 
-Filter = DBFilter('Пол', 'Самец');
+Filter = DBFilter("Порядковый номер особи текущего года(№_пер.набл.)", '4_1.1_2019-2020');
+
 
 Count = [];
 Date = string.empty;
 for K = 1:numel(Final_part)
     disp([num2str(K) '/' num2str(numel(Final_part))]);
    
-    tmp = Final_part(K).counter([]);
+%     tmp = Final_part(K).counter(Filter);
+    tmp = Final_part(K).counter(Filter);
     if tmp ~= 0
         Count(K) = tmp;
         Date(K) = Final_part(K).get_unique("Полная дата");
@@ -78,7 +80,7 @@ figure
 plot(Date, Count_mm, '.-')
 
 
-
+%%
 
 
 
